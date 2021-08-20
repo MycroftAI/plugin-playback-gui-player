@@ -37,6 +37,7 @@ class GuiPlayerService(AudioBackend):
         self.track_lock = Lock()
         self.track_meta_from_player = None
         self.track_meta_from_cps = None
+        self.supports_mime_hints = True
 
         self.bus.on('GuiPlayerServicePlay', self._play)
         self.bus.on(
@@ -64,17 +65,29 @@ class GuiPlayerService(AudioBackend):
             track = track_data[0]
             mime = track_data[1]
             mime = mime.split('/')
+            theme = track_data[2]
+
+            if "type" in mime[0] and "video" in mime[1]:
+                mime = ["video", "type"]
+
+            if "type" in mime[0] and "audio" in mime[1]:
+                mime = ["audio", "type"]
+
+            if "type" in mime[0] and "radio" in mime[1]:
+                mime = ["radio", "type"]
+
         else:  # Assume string
             track = track_data
             mime = self.find_mime(track)
-        return track, mime
+            theme = None
+        return track, mime, theme
 
     def _play(self, message):
         """ Handle _play call from play signal. """
         repeat = message.data.get("repeat", False)
         with self.track_lock:
             if len(self.tracks) > self.index:
-                track, mime = self._get_track(self.tracks[self.index])
+                track, mime, theme = self._get_track(self.tracks[self.index])
             else:
                 return
 
@@ -82,10 +95,16 @@ class GuiPlayerService(AudioBackend):
         if self._track_start_callback:
             self._track_start_callback(track)
 
+        if theme:
+            self.bus.emit(Message("playback.display.set.player.theme", {"theme": theme}))
+
         try:
             if 'video' in mime[0]:
                 LOG.debug("Sending Video Type")
                 self.bus.emit(Message("playback.display.video.type"))
+            elif 'radio' in mime[0]:
+                LOG.info("Sending Radio Type")
+                self.bus.emit(Message("playback.display.radio.type"))
             else:
                 LOG.debug("Sending Audio Type")
                 self.bus.emit(Message("playback.display.audio.type"))
