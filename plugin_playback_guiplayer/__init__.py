@@ -69,7 +69,7 @@ class GuiPlayerService(AudioBackend):
             # Assume track_data[3] is the theme
             # Check if its available
             if len(track_data) > 2:
-                theme = track_data[3]
+                theme = track_data[2]
             else:
                 theme = None
 
