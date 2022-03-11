@@ -65,7 +65,13 @@ class GuiPlayerService(AudioBackend):
             track = track_data[0]
             mime = track_data[1]
             mime = mime.split('/')
-            theme = track_data[2]
+
+            # Assume track_data[3] is the theme
+            # Check if its available
+            if len(track_data) > 2:
+                theme = track_data[3]
+            else:
+                theme = None
 
             if "type" in mime[0] and "video" in mime[1]:
                 mime = ["video", "type"]
